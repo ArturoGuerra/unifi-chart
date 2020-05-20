@@ -1,0 +1,22 @@
+{{- if .Values.ingress.enabled }}
+{{- $root := . }}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress 
+metadata:
+    name: {{ template "name" . }}
+    annotations:
+        {{- range .Values.ingress.annotations }}
+        {{ toYaml . | indent 8 }}
+        {{- end }}
+spec:
+    rules:
+      {{- range .Values.ingress.hosts }}
+      - host: {{ . }}
+        http:
+            paths:
+              - path: /inform
+                backend:
+                    serviceName: {{ template "name" $root }}-tcp
+                    servicePort: http
+      {{- end }}
+{{- end }}

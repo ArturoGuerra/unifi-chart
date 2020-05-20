@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: {{ template "name" . }}
+spec:
+    serviceName: {{ template "name" . }}
+    replicas: 1
+    selector:
+        matchLabels:
+            app: {{ template "name" . }}
+    template:
+      metadata:
+        labels:
+          app: {{ template "name" . }}
+      spec:
+        {{- if .Values.hostNetwork }}
+        hostNetwork: {{ .Values.hostNetwork }}
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        initContainers:
+          - name: init-cert
+            image: busybox:1.28
+            command: ['sh', '-c' , 'rm -rf /unifi/cert && mkdir -p /unifi/cert && cp /certs/* /unifi/cert && chmod -R 775 /unifi/cert']
+            volumeMounts:
+              - name: data
+                mountPath: /unifi
+              - name: certs
+                mountPath: /certs
+                readOnly: true
+        {{- end }}
+        containers:
+          - name: unifi
+            image: {{ template "image" . }}
+            ports:
+              {{- range .Values.service.ports }}
+              - name: {{ .name }}
+                containerPort: {{ .port }}
+              {{- end }}
+            volumeMounts:
+              - name: data
+                mountPath: /unifi
+            envFrom:
+              - configMapRef:
+                    name: {{ template "name" . }}
+            {{- if and .Values.tls.enabled .Values.tls.chained }}
+            env:
+              - name: CERT_IS_CHAIN
+                value: "true"
+            {{- end }}
+        volumes:
+          - name: data
+            persistentVolumeClaim:
+                claimName: {{ template "pvc" . }}
+          {{- if .Values.tls.enabled }}
+          - name: certs
+            secret:
+              secretName: {{ template "tls-secret" . }}
+              items:
+                - key: tls.key
+                  path: privkey.pem 
+                - key: tls.crt 
+                  path: cert.pem 
+          {{- end }}

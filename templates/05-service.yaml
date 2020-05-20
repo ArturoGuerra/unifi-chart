@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: {{ template "name" . }}-tcp
+    annotations:
+        {{- range .Values.service.annotations }}
+        {{ toYaml . | indent 8 }}
+        {{- end }}
+spec:
+    type: {{ .Values.service.type }}
+    {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.externalTrafficPolicy }}
+    externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+    {{- end }}
+    ports:
+      {{- range .Values.service.ports }}
+      {{- if eq .protocol "TCP" }}
+      - name: {{ .name }}
+        port: {{ .port }}
+        targetPort: {{ .port }}
+        protocol: {{ .protocol }}
+      {{- end }}
+      {{- end }}
+    selector:
+        app: {{ template "name" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: {{ template "name" . }}-udp
+    annotations:
+        {{- range .Values.service.annotations }}
+        {{ toYaml . | indent 8 }}
+        {{- end }}
+spec:
+    type: {{ .Values.service.type }}
+    {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.externalTrafficPolicy }}
+    externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+    {{- end }}
+    ports:
+      {{- range .Values.service.ports }}
+      {{- if eq .protocol "UDP" }}
+      - name: {{ .name }}
+        port: {{ .port }}
+        targetPort: {{ .port }}
+        protocol: {{ .protocol }}
+      {{- end }}
+      {{- end }}
+    selector:
+        app: {{ template "name" . }}

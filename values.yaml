@@ -1,0 +1,61 @@
+# Default values for unifi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: jacobalberty/unifi
+  tag: beta
+
+hostNetwork: false
+
+config:
+  UNIFI_HTTP_PORT: "80"
+  UNIFI_HTTPS_PORT: "443"
+  PKGURL: "https://dl.ui.com/unifi/5.14.7-ad58f9eb49/unifi_sysvinit_all.deb"
+
+service:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  annotations: []
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      protocol: TCP
+    - name: https-portal
+      port: 8843
+      protocol: TCP
+    - name: http-portal 
+      port: 8880
+      protocol: TCP
+    - name: stun
+      port: 3478
+      protocol: UDP
+    - name: ubnt-discovery
+      port: 10001
+      protocol: UDP
+
+ingress:
+  enabled: false
+  annotations: []
+  hosts:
+    - unifi.ar2ro.io
+tls:
+  enabled: true
+  chained: true
+  group: cert-manager.io
+  kind: ClusterIssuer
+  issuer: cloudflare
+  annotations:
+    - io.kubernetes.io/protocol: https
+  hosts:
+    - unifi.ar2ro.io
+  # secretName: chart-example-tls
+
+persistence:
+  enabled: true
+  storage: 10Gi
+  accessMode: ReadWriteOnce
+  # existingClaim: "Unifi Volume"

@@ -1,0 +1,33 @@
+{{- if .Values.ingress.enabled }}
+{{- $root := . }}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress 
+metadata:
+    name: {{ template "name" . }}-ssl
+    annotations:
+        {{- range .Values.ingress.annotations }}
+        {{ toYaml . | indent 8 }}
+        {{- end }}
+        {{- range .Values.tls.annotations }}
+        {{ toYaml . | indent 8 }}
+        {{- end }}
+spec:
+    {{- if .Values.tls.enabled }}
+    tls:
+      - hosts:
+          {{- range .Values.tls.hosts }}
+          - {{ . }}
+          {{- end }}
+        secretName: {{ template "tls-secret" . }}
+    {{- end }}
+    rules:
+      {{- range .Values.ingress.hosts }}
+      - host: {{ . }}
+        http:
+            paths:
+              - path: /
+                backend:
+                    serviceName: {{ template "name" $root }}-tcp
+                    servicePort: https
+      {{- end }}
+{{- end }}
